@@ -7,7 +7,8 @@ nixPkgs = ["nodejs_20", "python3", "gcc"]
 cmds = ["npm ci"]
 
 [phases.build]
-cmds = ["npm run build"]
+# Rebuild native module for container's Linux env (avoids "invalid ELF header" from wrong-platform binaries)
+cmds = ["rm -rf node_modules/better-sqlite3/build", "npm rebuild better-sqlite3", "npm run build"]
 
 [start]
 cmd = "npm start"
