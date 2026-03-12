@@ -1,0 +1,53 @@
+import { Router, Response } from 'express';
+import { store } from '../db/store';
+import { AuthRequest } from '../middleware/auth';
+
+const router = Router();
+
+router.get('/', (req: AuthRequest, res: Response) => {
+  const federated = store.getAllBlocklist();
+  const personal = store.getPersonalBlocklist(req.deviceId!);
+  const federatedNumbers = new Set(federated.map((e) => e.number));
+  const merged = [...federated];
+  personal.forEach((p) => {
+    if (!federatedNumbers.has(p.number)) {
+      merged.push({
+        number: p.number,
+        type: 'other',
+        tier: 'personal',
+        weight: 1,
+        sourceId: 'personal',
+        addedAt: p.added_at,
+      });
+    }
+  });
+  res.json(merged);
+});
+
+router.post('/personal', (req: AuthRequest, res: Response) => {
+  const { number } = req.body;
+  if (!number || typeof number !== 'string') {
+    return res.status(400).json({ error: 'Number is required' });
+  }
+  const normalized = String(number).replace(/\D/g, '');
+  if (normalized.length < 10) {
+    return res.status(400).json({ error: 'Invalid phone number' });
+  }
+  const fullNumber = normalized.length <= 10 ? `+1${normalized}` : `+${normalized}`;
+  store.addPersonalBlock(req.deviceId!, fullNumber);
+  res.json({ success: true, number: fullNumber });
+});
+
+router.delete('/personal/:number', (req: AuthRequest, res: Response) => {
+  const raw = req.params.number;
+  const number = Array.isArray(raw) ? raw[0] : raw;
+  if (!number) {
+    return res.status(400).json({ error: 'Number is required' });
+  }
+  const normalized = String(number).replace(/\D/g, '');
+  const fullNumber = normalized.length <= 10 ? `+1${normalized}` : `+${normalized}`;
+  store.removePersonalBlock(req.deviceId!, fullNumber);
+  res.json({ success: true });
+});
+
+export default router;
