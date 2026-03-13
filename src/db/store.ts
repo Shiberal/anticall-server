@@ -58,6 +58,11 @@ export const store = {
     db.prepare('DELETE FROM reports WHERE id = ?').run(id);
   },
 
+  getAllReportIds: (): string[] => {
+    const rows = db.prepare('SELECT id FROM reports').all() as { id: string }[];
+    return rows.map((r) => r.id);
+  },
+
   getPendingReports: (limit = 50, offset = 0): Report[] => {
     return db.prepare('SELECT * FROM reports ORDER BY created_at DESC LIMIT ? OFFSET ?')
       .all(limit, offset) as Report[];

@@ -25,6 +25,7 @@ app.get('/config', (req, res) => {
     minVotesSpam: parseInt(process.env.MIN_VOTES_SPAM || process.env.MIN_VOTES || '3', 10),
     minVotesTelemarketer: parseInt(process.env.MIN_VOTES_TELEMARKETER || process.env.MIN_VOTES || '3', 10),
     minVotesHarassment: parseInt(process.env.MIN_VOTES_HARASSMENT || process.env.MIN_VOTES || '3', 10),
+    minVotesScam: parseInt(process.env.MIN_VOTES_SCAM || process.env.MIN_VOTES || '3', 10),
   });
 });
 

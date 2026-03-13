@@ -1,8 +1,15 @@
 import { Router, Response } from 'express';
 import { store } from '../db/store';
+import { reportService } from '../services/reportService';
 import { AuthRequest } from '../middleware/auth';
 
 const router = Router();
+
+/** Refresh blocklist: re-run report-to-blocklist (promote/demote) for all reports. */
+router.post('/refresh', (req: AuthRequest, res: Response) => {
+  const processed = reportService.refreshBlocklist();
+  res.json({ success: true, processed });
+});
 
 router.get('/', (req: AuthRequest, res: Response) => {
   const federated = store.getAllBlocklist();

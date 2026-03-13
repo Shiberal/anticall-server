@@ -7,6 +7,7 @@ const MIN_VOTES = parseInt(process.env.MIN_VOTES || '3', 10);
 const MIN_VOTES_SPAM = parseInt(process.env.MIN_VOTES_SPAM || process.env.MIN_VOTES || '3', 10);
 const MIN_VOTES_TELEMARKETER = parseInt(process.env.MIN_VOTES_TELEMARKETER || process.env.MIN_VOTES || '3', 10);
 const MIN_VOTES_HARASSMENT = parseInt(process.env.MIN_VOTES_HARASSMENT || process.env.MIN_VOTES || '3', 10);
+const MIN_VOTES_SCAM = parseInt(process.env.MIN_VOTES_SCAM || process.env.MIN_VOTES || '3', 10);
 
 export const reportService = {
   createReport: (number: string, type: BlockType, deviceId: string, description?: string | null): { report: Report; isNew: boolean } => {
@@ -35,6 +36,7 @@ export const reportService = {
       case 'spam': return MIN_VOTES_SPAM;
       case 'telemarketer': return MIN_VOTES_TELEMARKETER;
       case 'harassment': return MIN_VOTES_HARASSMENT;
+      case 'scam': return MIN_VOTES_SCAM;
       default: return MIN_VOTES;
     }
   },
@@ -82,5 +84,12 @@ export const reportService = {
         store.removeBlocklistEntry(report.number, report.type);
       }
     }
+  },
+
+  /** Re-run promote/demote for all reports to refresh the blocklist from current votes. */
+  refreshBlocklist: (): number => {
+    const ids = store.getAllReportIds();
+    ids.forEach((id) => reportService.checkThresholdAndPromote(id));
+    return ids.length;
   }
 };

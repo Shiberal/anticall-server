@@ -4,7 +4,7 @@
 nixPkgs = ["nodejs_20", "python3", "gcc"]
 
 [phases.install]
-cmds = ["npm ci"]
+cmds = ["npm ci --include=dev"]
 
 [phases.build]
 # Build better-sqlite3 from source for container's Linux (avoids "invalid ELF header")
