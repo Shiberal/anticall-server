@@ -65,14 +65,17 @@ export const reportService = {
     if (totalVotes === 0) return;
 
     const ratio = stats.positive / totalVotes;
+    const tier: BlockTier =
+      report.type === 'spam' ? 'surely_spam' :
+      report.type === 'scam' ? 'surely_scam' :
+      report.type === 'telemarketer' ? 'surely_telemarketer' :
+      report.type === 'harassment' ? 'surely_harassment' : 'default';
 
-    // Promote: bypass MIN_VOTES – any report with positive ratio above threshold goes to blocklist
-    if (ratio >= VOTE_RATIO_THRESHOLD) {
-      const tier: BlockTier =
-        report.type === 'spam' ? 'surely_spam' :
-        report.type === 'scam' ? 'surely_scam' :
-        report.type === 'telemarketer' ? 'surely_telemarketer' :
-        report.type === 'harassment' ? 'surely_harassment' : 'default';
+    // Surely_* tiers require MIN_VOTES; default tier bypasses (single vote can promote)
+    const needsMinVotes = tier !== 'default';
+    const canPromote = ratio >= VOTE_RATIO_THRESHOLD && (!needsMinVotes || totalVotes >= minVotes);
+
+    if (canPromote) {
       store.upsertBlocklistEntry({
         number: report.number,
         type: report.type,
