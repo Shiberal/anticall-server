@@ -15,7 +15,19 @@ router.get('/', (req: AuthRequest, res: Response) => {
   const rateBasedOnly = req.query.rateBased === '1' || req.query.rateBased === 'true';
   const federated = store.getAllBlocklist();
   if (rateBasedOnly) {
-    return res.json(federated);
+    const blocklistKeys = new Set(federated.map((e) => `${e.number}|${e.type}`));
+    const reported = store.getReportedNumberTypes();
+    const fromReports = reported
+      .filter((r) => !blocklistKeys.has(`${r.number}|${r.type}`))
+      .map((r) => ({
+        number: r.number,
+        type: r.type as import('../../data_template/interfaces').BlockType,
+        tier: 'default' as const,
+        weight: 0,
+        sourceId: 'reported',
+        addedAt: 0,
+      }));
+    return res.json([...federated, ...fromReports]);
   }
   const personal = store.getPersonalBlocklist(req.deviceId!);
   const federatedNumbers = new Set(federated.map((e) => e.number));

@@ -62,27 +62,28 @@ export const reportService = {
     const totalVotes = stats.positive + stats.negative;
     const minVotes = reportService.getMinVotesForType(report.type);
 
-    if (totalVotes >= minVotes) {
-      const ratio = stats.positive / totalVotes;
-      if (ratio >= VOTE_RATIO_THRESHOLD) {
-        // Promote to blocklist with tier based on type
-        const tier: BlockTier =
-          report.type === 'spam' ? 'surely_spam' :
-          report.type === 'scam' ? 'surely_scam' :
-          report.type === 'telemarketer' ? 'surely_telemarketer' :
-          report.type === 'harassment' ? 'surely_harassment' : 'default';
-        store.upsertBlocklistEntry({
-          number: report.number,
-          type: report.type,
-          tier,
-          weight: stats.positive,
-          addedAt: Date.now(),
-          sourceId: 'local'
-        });
-      } else if (ratio < VOTE_RATIO_DEMOTE_THRESHOLD) {
-        // Demote: remove from blocklist when enough thumbs down
-        store.removeBlocklistEntry(report.number, report.type);
-      }
+    if (totalVotes === 0) return;
+
+    const ratio = stats.positive / totalVotes;
+
+    // Promote: bypass MIN_VOTES – any report with positive ratio above threshold goes to blocklist
+    if (ratio >= VOTE_RATIO_THRESHOLD) {
+      const tier: BlockTier =
+        report.type === 'spam' ? 'surely_spam' :
+        report.type === 'scam' ? 'surely_scam' :
+        report.type === 'telemarketer' ? 'surely_telemarketer' :
+        report.type === 'harassment' ? 'surely_harassment' : 'default';
+      store.upsertBlocklistEntry({
+        number: report.number,
+        type: report.type,
+        tier,
+        weight: stats.positive,
+        addedAt: Date.now(),
+        sourceId: 'local'
+      });
+    } else if (totalVotes >= minVotes && ratio < VOTE_RATIO_DEMOTE_THRESHOLD) {
+      // Demote: remove from blocklist only when enough votes and ratio below demote threshold
+      store.removeBlocklistEntry(report.number, report.type);
     }
   },
 

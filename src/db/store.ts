@@ -63,6 +63,11 @@ export const store = {
     return rows.map((r) => r.id);
   },
 
+  /** Distinct (number, type) from all reports – for including in rate-based blocklist. */
+  getReportedNumberTypes: (): { number: string; type: string }[] => {
+    return db.prepare('SELECT DISTINCT number, type FROM reports').all() as { number: string; type: string }[];
+  },
+
   getPendingReports: (limit = 50, offset = 0): Report[] => {
     return db.prepare('SELECT * FROM reports ORDER BY created_at DESC LIMIT ? OFFSET ?')
       .all(limit, offset) as Report[];
