@@ -12,7 +12,11 @@ router.post('/refresh', (req: AuthRequest, res: Response) => {
 });
 
 router.get('/', (req: AuthRequest, res: Response) => {
+  const rateBasedOnly = req.query.rateBased === '1' || req.query.rateBased === 'true';
   const federated = store.getAllBlocklist();
+  if (rateBasedOnly) {
+    return res.json(federated);
+  }
   const personal = store.getPersonalBlocklist(req.deviceId!);
   const federatedNumbers = new Set(federated.map((e) => e.number));
   const merged = [...federated];
